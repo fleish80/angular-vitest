@@ -1,5 +1,3 @@
-import { expectTypeOf } from 'vitest';
-
 describe('Basic Type Assertions', () => {
   it('should verify primitive types', () => {
     expectTypeOf('hello').toBeString();
