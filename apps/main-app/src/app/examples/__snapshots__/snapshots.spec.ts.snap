@@ -1,0 +1,51 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`File Snapshots > should snapshot a config object 1`] = `
+{
+  "apiUrl": "https://api.example.com",
+  "features": [
+    "auth",
+    "logging",
+    "cache",
+  ],
+  "retries": 3,
+  "timeout": 5000,
+}
+`;
+
+exports[`File Snapshots > should snapshot an array of items 1`] = `
+[
+  {
+    "active": true,
+    "id": 1,
+    "name": "Item A",
+  },
+  {
+    "active": false,
+    "id": 2,
+    "name": "Item B",
+  },
+  {
+    "active": true,
+    "id": 3,
+    "name": "Item C",
+  },
+]
+`;
+
+exports[`Snapshot of Strings > should snapshot multi-line HTML 1`] = `
+"<div class="card">
+  <h2>Product Name</h2>
+  <p class="price">$29.99</p>
+  <button class="add-to-cart">Add to Cart</button>
+</div>"
+`;
+
+exports[`Snapshot with Dynamic Values > should snapshot with asymmetric matchers for dynamic fields 1`] = `
+{
+  "createdAt": Any<Date>,
+  "id": Any<String>,
+  "name": "Bob",
+  "role": "admin",
+}
+`;

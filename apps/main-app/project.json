@@ -1,0 +1,88 @@
+{
+  "name": "main-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "apps/main-app/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/apps/main-app",
+        "browser": "apps/main-app/src/main.ts",
+        "tsConfig": "apps/main-app/tsconfig.app.json",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/main-app/public"
+          }
+        ],
+        "styles": [
+          "apps/main-app/src/material-theme.scss",
+          "apps/main-app/src/styles.css"
+        ]
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@angular/build:dev-server",
+      "configurations": {
+        "production": {
+          "buildTarget": "main-app:build:production"
+        },
+        "development": {
+          "buildTarget": "main-app:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "test:browser": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "npx vitest --config vitest.config.browser.mts",
+        "cwd": "apps/main-app"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "main-app:build",
+        "port": 4200,
+        "staticFilePath": "dist/apps/main-app/browser",
+        "spa": true
+      }
+    }
+  }
+}
