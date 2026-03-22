@@ -13,6 +13,10 @@ describe('CounterComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  // whenStable() triggers change detection and waits for any async tasks to complete.
+  // After createComponent(), the template hasn't been rendered yet — signals like
+  // count() and title() exist, but the DOM is empty. whenStable() renders the
+  // template so we can query the DOM for elements and assert on their content.
   it('should display initial count of 0', async () => {
     const fixture = TestBed.createComponent(CounterComponent);
     await fixture.whenStable();
@@ -29,6 +33,9 @@ describe('CounterComponent', () => {
     expect(el.querySelector('h3')?.textContent).toContain('Counter');
   });
 
+  // setInput() updates the signal input value, but the DOM still reflects the old
+  // state. whenStable() runs change detection so the template re-evaluates {{ title() }}
+  // and renders the new value into the DOM.
   it('should render custom title from input', async () => {
     const fixture = TestBed.createComponent(CounterComponent);
     fixture.componentRef.setInput('title', 'My Counter');
@@ -38,6 +45,10 @@ describe('CounterComponent', () => {
     expect(el.querySelector('h3')?.textContent).toContain('My Counter');
   });
 
+  // Two whenStable() calls are needed here:
+  // 1st — renders the initial DOM so we can querySelector() the button.
+  // 2nd — after click(), the signal count is updated; whenStable() runs change
+  //        detection again so the DOM reflects the new count value.
   it('should increment when + is clicked', async () => {
     const fixture = TestBed.createComponent(CounterComponent);
     await fixture.whenStable();
@@ -61,6 +72,9 @@ describe('CounterComponent', () => {
     expect(fixture.componentInstance.count()).toBe(-1);
   });
 
+  // No whenStable() needed below — these tests only assert on the component instance
+  // (signal values, emitted events), not on the DOM. Change detection is irrelevant
+  // when you're not querying rendered template output.
   it('should reset to 0', () => {
     const fixture = TestBed.createComponent(CounterComponent);
     const component = fixture.componentInstance;

@@ -121,6 +121,8 @@ describe('CounterComponent', () => {
 
   it('should display initial count of 0', async () => {
     const fixture = TestBed.createComponent(CounterComponent);
+    // Triggers change detection and waits for async tasks to finish.
+    // Without this, the template is not rendered and the DOM is empty.
     await fixture.whenStable();
 
     const el = fixture.nativeElement as HTMLElement;
@@ -131,12 +133,15 @@ describe('CounterComponent', () => {
 
   protected interactionTest = `it('should increment when + is clicked', async () => {
   const fixture = TestBed.createComponent(CounterComponent);
+  // 1st call — renders the initial template so we can query the DOM
   await fixture.whenStable();
 
   const buttons = fixture.nativeElement.querySelectorAll('button');
   const incrementBtn = buttons[0]; // +
 
   incrementBtn.click();
+  // 2nd call — the click updated a signal; need another change detection
+  // pass so the DOM reflects the new count value
   await fixture.whenStable();
 
   expect(fixture.componentInstance.count()).toBe(1);
@@ -146,6 +151,8 @@ describe('CounterComponent', () => {
     .toContain('Count: 1');
 });
 
+// No whenStable() needed here — we only assert on the component instance
+// (signal values), never on the DOM. No DOM query = no need for rendering.
 it('should reset to 0', async () => {
   const fixture = TestBed.createComponent(CounterComponent);
   const component = fixture.componentInstance;
@@ -161,6 +168,8 @@ it('should reset to 0', async () => {
   protected inputTest = `it('should render custom title from input', async () => {
   const fixture = TestBed.createComponent(CounterComponent);
   fixture.componentRef.setInput('title', 'My Counter');
+  // setInput() updates the signal, but the DOM still shows the old value.
+  // whenStable() runs change detection so {{ title() }} re-evaluates.
   await fixture.whenStable();
 
   const el = fixture.nativeElement as HTMLElement;
