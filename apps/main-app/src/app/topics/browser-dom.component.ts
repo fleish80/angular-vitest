@@ -40,14 +40,6 @@ import { RunHintComponent } from '../shared/run-hint.component';
     </div>
 
     <div class="topic-section">
-      <h3>Focus management</h3>
-      <p>
-        Test real focus behavior, tab order, and focus trapping.
-      </p>
-      <app-code-block [code]="focus" />
-    </div>
-
-    <div class="topic-section">
       <h3>Scroll behavior</h3>
       <app-code-block [code]="scroll" />
     </div>
@@ -67,7 +59,7 @@ import { RunHintComponent } from '../shared/run-hint.component';
       responsive components, and charts.
     </div>
 
-    <app-run-hint command="npm run test:browser -- --testFiles=real-dom" />
+    <app-run-hint command="npm run test:browser real-dom" />
   `,
   styles: `
     code {
@@ -80,123 +72,114 @@ import { RunHintComponent } from '../shared/run-hint.component';
   `,
 })
 export class BrowserDomComponent {
-  protected computedStyles = `it('should read computed styles', async () => {
-  document.body.innerHTML = \`
-    <style>
-      .alert { color: red; font-size: 18px; display: flex; }
-    </style>
-    <div class="alert">Warning!</div>
-  \`;
+  protected computedStyles = `it('should read computed styles from CSS', async () => {
+  const style = document.createElement('style');
+  style.textContent = \`.alert { color: red; font-weight: bold; }\`;
+  document.head.appendChild(style);
+
+  document.body.innerHTML = \`<div class="alert">Warning!</div>\`;
 
   const el = document.querySelector('.alert')!;
-  const styles = getComputedStyle(el);
+  const computed = getComputedStyle(el);
 
-  // In browser mode: real values
-  expect(styles.color).toBe('rgb(255, 0, 0)');
-  expect(styles.fontSize).toBe('18px');
-  expect(styles.display).toBe('flex');
+  expect(computed.color).toBe('rgb(255, 0, 0)');
+  expect(computed.fontWeight).toBe('700');
 
-  // In jsdom: these would all be empty strings!
-});`;
+  style.remove();
+});
 
-  protected dimensions = `it('should measure element dimensions', async () => {
+it('should read display property', async () => {
   document.body.innerHTML = \`
-    <div style="width: 200px; height: 100px; padding: 10px;">
-      Content
+    <div id="flex-box" style="display: flex; gap: 8px;">
+      <span>A</span><span>B</span>
     </div>
   \`;
 
-  const el = document.querySelector('div')!;
+  const el = document.getElementById('flex-box')!;
+  expect(getComputedStyle(el).display).toBe('flex');
+});`;
+
+  protected dimensions = `it('should measure element size with getBoundingClientRect', async () => {
+  document.body.innerHTML = \`
+    <div id="box" style="width: 200px; height: 100px;">Content</div>
+  \`;
+
+  const el = document.getElementById('box')!;
   const rect = el.getBoundingClientRect();
 
-  // In browser mode: real measurements
-  expect(rect.width).toBe(220);   // 200 + 10*2 padding
-  expect(rect.height).toBe(120);  // 100 + 10*2 padding
+  expect(rect.width).toBe(200);
+  expect(rect.height).toBe(100);
   expect(rect.top).toBeGreaterThanOrEqual(0);
+  expect(rect.left).toBeGreaterThanOrEqual(0);
+});
 
-  // In jsdom: all zeros
-  // { width: 0, height: 0, top: 0, left: 0 }
-});`;
-
-  protected visibility = `it('should detect element visibility', async () => {
+it('should measure offset dimensions', async () => {
   document.body.innerHTML = \`
-    <div id="visible">I'm visible</div>
-    <div id="hidden" style="display: none">I'm hidden</div>
-    <div id="transparent" style="opacity: 0">I'm transparent</div>
-    <div style="overflow: hidden; width: 0; height: 0">
-      <div id="clipped">I'm clipped</div>
+    <div id="padded"
+      style="width: 100px; height: 50px; padding: 10px; border: 2px solid black;">
+      Padded
     </div>
   \`;
 
-  const visible = page.getByText("I'm visible");
-  const hidden = page.getByText("I'm hidden");
+  const el = document.getElementById('padded')! as HTMLElement;
 
-  await expect.element(visible).toBeVisible();
-  await expect.element(hidden).not.toBeVisible();
-
-  // These nuances only work in a real browser
+  expect(el.offsetWidth).toBe(124);   // 100 + 10*2 + 2*2
+  expect(el.offsetHeight).toBe(74);   // 50 + 10*2 + 2*2
 });`;
 
-  protected focus = `it('should manage focus correctly', async () => {
-  document.body.innerHTML = \`
-    <input id="first" type="text" />
-    <input id="second" type="text" />
-    <button id="submit">Submit</button>
-  \`;
+  protected visibility = `it('should detect visible elements', async () => {
+  document.body.innerHTML = \`<div>I am visible</div>\`;
 
-  const first = page.getByRole('textbox').first();
+  const el = page.getByText('I am visible');
+  await expect.element(el).toBeVisible();
+});
 
-  await userEvent.click(first);
+it('should detect hidden elements (display: none)', async () => {
+  document.body.innerHTML =
+    \`<div style="display: none">I am hidden</div>\`;
 
-  // Real focus — document.activeElement works correctly
-  expect(document.activeElement?.id).toBe('first');
+  const el = page.getByText('I am hidden');
+  await expect.element(el).not.toBeVisible();
+});
 
-  // Tab to next element
-  await userEvent.keyboard('{Tab}');
-  expect(document.activeElement?.id).toBe('second');
+it('should detect hidden elements (visibility: hidden)', async () => {
+  document.body.innerHTML =
+    \`<div style="visibility: hidden">I am invisible</div>\`;
 
-  await userEvent.keyboard('{Tab}');
-  expect(document.activeElement?.id).toBe('submit');
+  const el = page.getByText('I am invisible');
+  await expect.element(el).not.toBeVisible();
 });`;
 
-  protected scroll = `it('should handle scroll', async () => {
+  protected scroll = `it('should handle scrollTo', async () => {
   document.body.innerHTML = \`
-    <div id="scroller" style="height:100px; overflow:auto">
-      <div style="height: 1000px">Tall content</div>
+    <div id="scroller" style="height: 100px; overflow: auto;">
+      <div style="height: 1000px;">Tall content</div>
     </div>
   \`;
 
   const scroller = document.getElementById('scroller')!;
-
   expect(scroller.scrollTop).toBe(0);
 
-  scroller.scrollTo({ top: 500 });
-
-  // In browser mode: scrollTop updates
+  scroller.scrollTop = 500;
   expect(scroller.scrollTop).toBe(500);
-
-  // In jsdom: scrollTo is a no-op,
-  // scrollTop stays 0
 });`;
 
-  protected canvas = `it('should use Canvas API', async () => {
+  protected canvas = `it('should draw on canvas and read pixels', async () => {
   const canvas = document.createElement('canvas');
-  canvas.width = 200;
-  canvas.height = 200;
+  canvas.width = 100;
+  canvas.height = 100;
   document.body.appendChild(canvas);
 
   const ctx = canvas.getContext('2d')!;
+  expect(ctx).not.toBeNull();
 
-  // Real canvas drawing
-  ctx.fillStyle = 'red';
-  ctx.fillRect(0, 0, 100, 100);
+  ctx.fillStyle = 'rgb(255, 0, 0)';
+  ctx.fillRect(0, 0, 50, 50);
 
-  // Read pixel data
-  const pixel = ctx.getImageData(50, 50, 1, 1).data;
+  const pixel = ctx.getImageData(25, 25, 1, 1).data;
   expect(pixel[0]).toBe(255); // Red
   expect(pixel[1]).toBe(0);   // Green
   expect(pixel[2]).toBe(0);   // Blue
-
-  // In jsdom: getContext('2d') returns null!
+  expect(pixel[3]).toBe(255); // Alpha
 });`;
 }

@@ -1,5 +1,4 @@
 import { page, userEvent } from 'vitest/browser';
-import { expect, it, describe, beforeEach } from 'vitest';
 
 describe('Browser Interactions', () => {
   beforeEach(() => {
@@ -10,7 +9,7 @@ describe('Browser Interactions', () => {
     document.body.innerHTML = `<button id="counter">Clicks: 0</button>`;
 
     let count = 0;
-    const btn = document.getElementById('counter')!;
+    const btn = document.getElementById('counter') as HTMLButtonElement;
     btn.addEventListener('click', () => {
       count++;
       btn.textContent = `Clicks: ${count}`;
@@ -43,7 +42,7 @@ describe('Browser Interactions', () => {
     const events: string[] = [];
 
     document.body.innerHTML = '<input type="text" id="kb-input" />';
-    const inputEl = document.getElementById('kb-input')!;
+    const inputEl = document.getElementById('kb-input') as HTMLInputElement;
 
     inputEl.addEventListener('keydown', (e) => {
       events.push(e.key);
@@ -64,8 +63,8 @@ describe('Browser Interactions', () => {
       <div id="tooltip" style="display: none;">Tooltip content</div>
     `;
 
-    const trigger = document.getElementById('trigger')!;
-    const tooltip = document.getElementById('tooltip')!;
+    const trigger = document.getElementById('trigger') as HTMLElement;
+    const tooltip = document.getElementById('tooltip') as HTMLElement;
 
     trigger.addEventListener('mouseenter', () => {
       tooltip.style.display = 'block';

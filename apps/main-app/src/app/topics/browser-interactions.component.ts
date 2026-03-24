@@ -28,12 +28,12 @@ import { RunHintComponent } from '../shared/run-hint.component';
 
     <div class="topic-section">
       <h3>Keyboard events</h3>
-      <p>Simulate keyboard shortcuts and special keys.</p>
+      <p>Simulate keyboard input and capture key events.</p>
       <app-code-block [code]="keyboardCode" />
     </div>
 
     <div class="topic-section">
-      <h3>Hover and focus</h3>
+      <h3>Hover events</h3>
       <app-code-block [code]="hoverCode" />
     </div>
 
@@ -42,7 +42,7 @@ import { RunHintComponent } from '../shared/run-hint.component';
       <app-code-block [code]="dragCode" />
     </div>
 
-    <app-run-hint command="npm run test:browser -- --testFiles=interactions" />
+    <app-run-hint command="npm run test:browser interactions" />
 
     <div class="topic-section">
       <h3>Why real events matter</h3>
@@ -77,81 +77,62 @@ it('should handle click events', async () => {
   \`;
 
   let count = 0;
-  const btn = document.getElementById('counter')!;
+  const btn = document.getElementById('counter') as HTMLButtonElement;
   btn.addEventListener('click', () => {
     count++;
     btn.textContent = \`Clicks: \${count}\`;
   });
 
   const button = page.getByRole('button');
-
   await userEvent.click(button);
   await expect.element(button).toHaveTextContent('Clicks: 1');
 
-  // Double click
-  await userEvent.dblClick(button);
-  await expect.element(button).toHaveTextContent('Clicks: 3');
-
-  // Right click
-  // await userEvent.click(button, { button: 'right' });
+  await userEvent.click(button);
+  await expect.element(button).toHaveTextContent('Clicks: 2');
 });`;
 
   protected typeCode = `it('should type in an input', async () => {
-  document.body.innerHTML = \`
-    <input type="text" placeholder="Search..." />
-  \`;
+  document.body.innerHTML = \`<input type="text" placeholder="Search..." />\`;
 
   const input = page.getByPlaceholder('Search...');
 
-  // fill() — sets value directly (fast)
   await userEvent.fill(input, 'Vitest');
   await expect.element(input).toHaveValue('Vitest');
 
-  // clear first, then fill
   await userEvent.clear(input);
   await expect.element(input).toHaveValue('');
 
-  // type() — types character by character
-  // Fires keydown, keypress, input, keyup for each char
-  await userEvent.type(input, 'Angular');
+  await userEvent.fill(input, 'Angular');
   await expect.element(input).toHaveValue('Angular');
 });`;
 
-  protected keyboardCode = `it('should handle keyboard shortcuts', async () => {
+  protected keyboardCode = `it('should handle keyboard events', async () => {
   const events: string[] = [];
 
-  document.body.innerHTML = '<input type="text" />';
-  const inputEl = document.querySelector('input')!;
+  document.body.innerHTML = '<input type="text" id="kb-input" />';
+  const inputEl = document.getElementById('kb-input') as HTMLInputElement;
 
   inputEl.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.key === 'a') events.push('select-all');
-    if (e.key === 'Escape') events.push('escape');
-    if (e.key === 'Enter') events.push('enter');
+    events.push(e.key);
   });
 
   const input = page.getByRole('textbox');
   await userEvent.click(input);
+  await userEvent.keyboard('abc');
 
-  // Tab key
-  await userEvent.keyboard('{Tab}');
-
-  // Enter key
-  await userEvent.keyboard('{Enter}');
-  expect(events).toContain('enter');
-
-  // Escape key
-  await userEvent.keyboard('{Escape}');
-  expect(events).toContain('escape');
+  expect(events).toContain('a');
+  expect(events).toContain('b');
+  expect(events).toContain('c');
 });`;
 
-  protected hoverCode = `it('should handle hover states', async () => {
+  protected hoverCode = `it('should handle hover events', async () => {
   document.body.innerHTML = \`
-    <div id="tooltip-trigger">Hover me</div>
-    <div id="tooltip" style="display:none">Tooltip!</div>
+    <div id="trigger" style="padding: 10px; cursor: pointer;">Hover me</div>
+    <div id="tooltip" style="display: none;">Tooltip content</div>
   \`;
 
-  const trigger = document.getElementById('tooltip-trigger')!;
-  const tooltip = document.getElementById('tooltip')!;
+  const trigger = document.getElementById('trigger') as HTMLElement;
+  const tooltip = document.getElementById('tooltip') as HTMLElement;
 
   trigger.addEventListener('mouseenter', () => {
     tooltip.style.display = 'block';
@@ -160,13 +141,14 @@ it('should handle click events', async () => {
     tooltip.style.display = 'none';
   });
 
-  const el = page.getByText('Hover me');
+  const hoverTarget = page.getByText('Hover me');
+  await userEvent.hover(hoverTarget);
 
-  await userEvent.hover(el);
-  // Tooltip is now visible in the real browser!
+  await expect.element(page.getByText('Tooltip content')).toBeVisible();
 
-  await userEvent.unhover(el);
-  // Tooltip hidden again
+  await userEvent.unhover(hoverTarget);
+
+  await expect.element(page.getByText('Tooltip content')).not.toBeVisible();
 });`;
 
   protected dragCode = `it('should drag and drop', async () => {

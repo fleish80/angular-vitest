@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 describe('Actionability Checks', () => {
@@ -10,8 +9,10 @@ describe('Actionability Checks', () => {
       </div>
     `;
 
-    document.getElementById('action')!.addEventListener('click', () => {
-      document.getElementById('result')!.textContent = 'clicked';
+    const actionBtn = document.getElementById('action') as HTMLButtonElement;
+    const resultSpan = document.getElementById('result') as HTMLSpanElement;
+    actionBtn.addEventListener('click', () => {
+      resultSpan.textContent = 'clicked';
     });
 
     const btn = page.getByRole('button', { name: 'Click me' });
@@ -25,7 +26,7 @@ describe('Actionability Checks', () => {
       <button style="display: none">Hidden Button</button>
     `;
 
-    const btn = page.getByRole('button', { name: 'Hidden Button' });
+    const btn = page.getByText('Hidden Button');
     await expect.element(btn).not.toBeVisible();
   });
 
@@ -34,7 +35,7 @@ describe('Actionability Checks', () => {
       <button style="visibility: hidden">Invisible Button</button>
     `;
 
-    const btn = page.getByRole('button', { name: 'Invisible Button' });
+    const btn = page.getByText('Invisible Button');
     await expect.element(btn).not.toBeVisible();
   });
 
@@ -47,14 +48,19 @@ describe('Actionability Checks', () => {
       </div>
     `;
 
-    document.getElementById('reveal')!.addEventListener('click', () => {
+    const revealBtn = document.getElementById('reveal') as HTMLButtonElement;
+    const panel = document.getElementById('panel') as HTMLDivElement;
+    const panelActionBtn = document.getElementById('panel-action') as HTMLButtonElement;
+    const panelResult = document.getElementById('panel-result') as HTMLSpanElement;
+
+    revealBtn.addEventListener('click', () => {
       setTimeout(() => {
-        document.getElementById('panel')!.style.display = 'block';
+        panel.style.display = 'block';
       }, 150);
     });
 
-    document.getElementById('panel-action')!.addEventListener('click', () => {
-      document.getElementById('panel-result')!.textContent = 'panel clicked';
+    panelActionBtn.addEventListener('click', () => {
+      panelResult.textContent = 'panel clicked';
     });
 
     await userEvent.click(page.getByRole('button', { name: 'Show Panel' }));

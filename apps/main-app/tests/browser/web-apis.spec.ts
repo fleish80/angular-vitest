@@ -1,6 +1,3 @@
-import { page } from 'vitest/browser';
-import { expect, it, describe, beforeEach, vi } from 'vitest';
-
 describe('Web APIs — matchMedia', () => {
   it('should support matchMedia queries', () => {
     const mql = window.matchMedia('(min-width: 100px)');
@@ -37,7 +34,8 @@ describe('Web APIs — IntersectionObserver', () => {
   it('should observe an element and fire callback', async () => {
     document.body.innerHTML = `<div id="target" style="height: 50px;">Visible</div>`;
 
-    const target = document.getElementById('target')!;
+    const target = document.getElementById('target');
+    if (!target) throw new Error('target not found');
     const entries: IntersectionObserverEntry[] = [];
 
     const observer = new IntersectionObserver((e) => {
@@ -75,7 +73,8 @@ describe('Web APIs — ResizeObserver', () => {
   it('should detect element resize', async () => {
     document.body.innerHTML = `<div id="box" style="width: 100px; height: 100px;">Box</div>`;
 
-    const box = document.getElementById('box')!;
+    const box = document.getElementById('box');
+    if (!box) throw new Error('box not found');
     const entries: ResizeObserverEntry[] = [];
 
     const observer = new ResizeObserver((e) => {

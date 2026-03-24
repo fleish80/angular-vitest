@@ -1,6 +1,4 @@
-import { describe, it, expect } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
-import { waitFor } from 'vitest/browser';
 
 describe('Polling & Retries', () => {
   describe('expect.poll', () => {
@@ -10,8 +8,9 @@ describe('Polling & Retries', () => {
         <span id="status">idle</span>
       `;
 
-      const statusEl = document.getElementById('status')!;
-      document.getElementById('start')!.addEventListener('click', () => {
+      const statusEl = document.getElementById('status') as HTMLSpanElement;
+      const startBtn = document.getElementById('start') as HTMLButtonElement;
+      startBtn.addEventListener('click', () => {
         setTimeout(() => {
           statusEl.textContent = 'done';
         }, 200);
@@ -27,7 +26,7 @@ describe('Polling & Retries', () => {
         <ul id="list"></ul>
       `;
 
-      const list = document.getElementById('list')!;
+      const list = document.getElementById('list') as HTMLUListElement;
       setTimeout(() => {
         list.innerHTML = '<li>Item 1</li><li>Item 2</li><li>Item 3</li>';
       }, 150);
@@ -50,13 +49,13 @@ describe('Polling & Retries', () => {
     });
   });
 
-  describe('waitFor', () => {
-    it('should retry a block of assertions', async () => {
+  describe('expect.poll — multiple assertions', () => {
+    it('should retry until all conditions are met', async () => {
       document.body.innerHTML = `
         <div id="container"></div>
       `;
 
-      const container = document.getElementById('container')!;
+      const container = document.getElementById('container') as HTMLDivElement;
 
       setTimeout(() => {
         container.innerHTML = `
@@ -66,14 +65,8 @@ describe('Polling & Retries', () => {
         `;
       }, 200);
 
-      await waitFor(() => {
-        const heading = container.querySelector('h3');
-        const badge = container.querySelector('.badge');
-        expect(heading).not.toBeNull();
-        expect(heading!.textContent).toBe('Angular Testing');
-        expect(badge).not.toBeNull();
-        expect(badge!.textContent).toBe('new');
-      });
+      await expect.poll(() => container.querySelector('h3')?.textContent).toBe('Angular Testing');
+      await expect.poll(() => container.querySelector('.badge')?.textContent).toBe('new');
     });
   });
 
@@ -86,9 +79,11 @@ describe('Polling & Retries', () => {
         </div>
       `;
 
-      document.getElementById('toggle')!.addEventListener('click', () => {
+      const toggleBtn = document.getElementById('toggle') as HTMLButtonElement;
+      const content = document.getElementById('content') as HTMLDivElement;
+      toggleBtn.addEventListener('click', () => {
         setTimeout(() => {
-          document.getElementById('content')!.style.display = 'block';
+          content.style.display = 'block';
         }, 200);
       });
 
@@ -100,7 +95,7 @@ describe('Polling & Retries', () => {
 
     it('should retry toHaveTextContent', async () => {
       document.body.innerHTML = `<span id="counter">0</span>`;
-      const span = document.getElementById('counter')!;
+      const span = document.getElementById('counter') as HTMLSpanElement;
 
       let count = 0;
       const interval = setInterval(() => {

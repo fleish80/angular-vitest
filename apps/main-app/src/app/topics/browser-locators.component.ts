@@ -45,7 +45,7 @@ import { RunHintComponent } from '../shared/run-hint.component';
 
     <div class="topic-section">
       <h3>getByLabelText & getByPlaceholder</h3>
-      <p>Find form elements by their associated label or placeholder text.</p>
+      <p>Find form elements by their associated label text or placeholder.</p>
       <app-code-block [code]="byLabel" />
     </div>
 
@@ -62,7 +62,7 @@ import { RunHintComponent } from '../shared/run-hint.component';
       interact with your app.
     </div>
 
-    <app-run-hint command="npm run test:browser -- --testFiles=locators" />
+    <app-run-hint command="npm run test:browser locators" />
   `,
   styles: `
     code {
@@ -87,39 +87,37 @@ import { expect } from 'vitest';
 // page.getByAltText()
 // page.getByTitle()`;
 
-  protected byRole = `it('should find buttons by role', async () => {
+  protected byRole = `it('should find elements by role', async () => {
   document.body.innerHTML = \`
     <button>Submit</button>
     <button>Cancel</button>
+    <a href="/home">Go Home</a>
   \`;
 
-  // Find by role + accessible name
   const submitBtn = page.getByRole('button', { name: 'Submit' });
   await expect.element(submitBtn).toBeVisible();
 
-  // Find all buttons
   const cancelBtn = page.getByRole('button', { name: 'Cancel' });
   await expect.element(cancelBtn).toBeVisible();
-});
 
-// Common roles: button, link, heading, textbox,
-//   checkbox, radio, combobox, list, listitem`;
+  const homeLink = page.getByRole('link', { name: 'Go Home' });
+  await expect.element(homeLink).toBeVisible();
+});`;
 
   protected byText = `it('should find elements by text', async () => {
   document.body.innerHTML = \`
-    <p>Welcome to Vitest</p>
+    <p>Welcome to Vitest Browser Mode</p>
     <span>Version 4.0</span>
   \`;
 
-  const welcome = page.getByText('Welcome to Vitest');
+  const welcome = page.getByText('Welcome to Vitest Browser Mode');
   await expect.element(welcome).toBeVisible();
 
-  // Partial match with regex
   const version = page.getByText(/Version \\d/);
   await expect.element(version).toBeVisible();
 });`;
 
-  protected byTestId = `it('should find by data-testid', async () => {
+  protected byTestId = `it('should find elements by test id', async () => {
   document.body.innerHTML = \`
     <div data-testid="user-card">
       <span data-testid="user-name">Alice</span>
@@ -132,41 +130,38 @@ import { expect } from 'vitest';
 
   const name = page.getByTestId('user-name');
   await expect.element(name).toHaveTextContent('Alice');
+
+  const email = page.getByTestId('user-email');
+  await expect.element(email).toHaveTextContent('alice@test.com');
 });`;
 
-  protected byLabel = `it('should find form inputs', async () => {
+  protected byLabel = `it('should find form elements by label', async () => {
   document.body.innerHTML = \`
-    <label for="email">Email</label>
-    <input id="email" type="email" placeholder="you@example.com" />
-
-    <label>
-      Password
-      <input type="password" placeholder="Enter password" />
-    </label>
+    <label for="email-input">Email</label>
+    <input id="email-input" type="email" placeholder="you@example.com" />
   \`;
 
-  // By label text (associated via for/id or wrapping)
-  const email = page.getByLabelText('Email');
-  await expect.element(email).toBeVisible();
+  const emailInput = page.getByLabelText('Email');
+  await expect.element(emailInput).toBeVisible();
 
-  // By placeholder
-  const password = page.getByPlaceholder('Enter password');
-  await expect.element(password).toBeVisible();
+  const byPlaceholder = page.getByPlaceholder('you@example.com');
+  await expect.element(byPlaceholder).toBeVisible();
 });`;
 
   protected chaining = `it('should chain locators for precision', async () => {
   document.body.innerHTML = \`
-    <div data-testid="sidebar">
+    <nav data-testid="sidebar">
       <a href="/home">Home</a>
-    </div>
-    <div data-testid="main">
+      <a href="/about">About</a>
+    </nav>
+    <main data-testid="content">
       <a href="/home">Home</a>
-    </div>
+      <p>Main content</p>
+    </main>
   \`;
 
-  // Both sections have a "Home" link
-  // Chain to find the one in sidebar
-  const sidebarHome = page.getByTestId('sidebar')
+  const sidebarHome = page
+    .getByTestId('sidebar')
     .getByRole('link', { name: 'Home' });
 
   await expect.element(sidebarHome).toBeVisible();

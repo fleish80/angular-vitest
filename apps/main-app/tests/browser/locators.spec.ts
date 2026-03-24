@@ -1,5 +1,4 @@
-import { page, userEvent } from 'vitest/browser';
-import { expect, it, describe, beforeEach } from 'vitest';
+import { page } from 'vitest/browser';
 
 describe('Browser Locators', () => {
   beforeEach(() => {

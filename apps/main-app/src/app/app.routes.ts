@@ -78,12 +78,20 @@ export const appRoutes: Route[] = [
     loadComponent: () => import('./topics/browser-dom.component').then(m => m.BrowserDomComponent),
   },
   {
+    path: 'browser-component-testing',
+    loadComponent: () => import('./topics/browser-component-testing.component').then(m => m.BrowserComponentTestingComponent),
+  },
+  {
     path: 'browser-polling',
     loadComponent: () => import('./topics/browser-polling.component').then(m => m.BrowserPollingComponent),
   },
   {
     path: 'browser-full-mode',
     loadComponent: () => import('./topics/browser-full-mode.component').then(m => m.BrowserFullModeComponent),
+  },
+  {
+    path: 'browser-web-apis',
+    loadComponent: () => import('./topics/browser-web-apis.component').then(m => m.BrowserWebApisComponent),
   },
   {
     path: 'browser-actionability',

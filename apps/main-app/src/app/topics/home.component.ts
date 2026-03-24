@@ -136,7 +136,7 @@ npx nx test main-app --watch --ui --coverage`;
 npx nx run main-app:test:browser --watch
 
 # Run a specific browser test file
-npx nx run main-app:test:browser --testFiles=locators --watch
+npx nx run main-app:test:browser --watch locators
 
 # Run headless (for CI)
 CI=true npx nx run main-app:test:browser`;

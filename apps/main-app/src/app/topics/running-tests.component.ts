@@ -143,13 +143,13 @@ npx nx test main-app basic matchers`;
   "test:ui":               "nx test main-app --ui"
 }`;
 
-  protected npmUsage = `# npm always needs -- to forward extra args
-npm run test:browser -- --testFiles=polling
+  protected npmUsage = `# npm forwards positional args to the underlying nx command
+npm run test:browser polling
 
 # What actually runs:
-#   nx run main-app:test:browser --watch --testFiles=polling
+#   nx run main-app:test:browser --watch polling
 #
-# The --testFiles option filters which spec files to run`;
+# The positional arg filters which spec files to run`;
 
   protected explicitTarget = `{
   "test:browser": {

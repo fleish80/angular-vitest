@@ -1,5 +1,4 @@
 import { page } from 'vitest/browser';
-import { expect, it, describe, beforeEach } from 'vitest';
 
 describe('Real DOM — Computed Styles', () => {
   beforeEach(() => {
@@ -13,7 +12,7 @@ describe('Real DOM — Computed Styles', () => {
 
     document.body.innerHTML = `<div class="alert">Warning!</div>`;
 
-    const el = document.querySelector('.alert')!;
+    const el = document.querySelector('.alert') as HTMLElement;
     const computed = getComputedStyle(el);
 
     expect(computed.color).toBe('rgb(255, 0, 0)');
@@ -29,7 +28,7 @@ describe('Real DOM — Computed Styles', () => {
       </div>
     `;
 
-    const el = document.getElementById('flex-box')!;
+    const el = document.getElementById('flex-box') as HTMLElement;
     expect(getComputedStyle(el).display).toBe('flex');
   });
 });
@@ -44,7 +43,7 @@ describe('Real DOM — Element Dimensions', () => {
       <div id="box" style="width: 200px; height: 100px;">Content</div>
     `;
 
-    const el = document.getElementById('box')!;
+    const el = document.getElementById('box') as HTMLElement;
     const rect = el.getBoundingClientRect();
 
     expect(rect.width).toBe(200);
@@ -60,7 +59,7 @@ describe('Real DOM — Element Dimensions', () => {
       </div>
     `;
 
-    const el = document.getElementById('padded')! as HTMLElement;
+    const el = document.getElementById('padded') as HTMLElement;
 
     expect(el.offsetWidth).toBe(124);
     expect(el.offsetHeight).toBe(74);
@@ -106,7 +105,7 @@ describe('Real DOM — Scroll', () => {
       </div>
     `;
 
-    const scroller = document.getElementById('scroller')!;
+    const scroller = document.getElementById('scroller') as HTMLElement;
     expect(scroller.scrollTop).toBe(0);
 
     scroller.scrollTop = 500;
@@ -125,7 +124,7 @@ describe('Real DOM — Canvas', () => {
     canvas.height = 100;
     document.body.appendChild(canvas);
 
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
     expect(ctx).not.toBeNull();
 
     ctx.fillStyle = 'rgb(255, 0, 0)';

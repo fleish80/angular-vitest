@@ -206,8 +206,8 @@ it('should load data', async () => {
   expect(data).toBeDefined();
 });
 
-// Plus: vi.waitFor for polling
-await vi.waitFor(() => {
-  expect(element.textContent).toBe('loaded');
-});`;
+// Plus: expect.poll for polling
+await expect.poll(
+  () => element.textContent
+).toBe('loaded');`;
 }

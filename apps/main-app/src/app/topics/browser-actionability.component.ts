@@ -74,7 +74,7 @@ import { RunHintComponent } from '../shared/run-hint.component';
       CSS bugs, overlapping modals, and invisible buttons are caught automatically.
     </div>
 
-    <app-run-hint command="npm run test:browser -- --testFiles=actionability" />
+    <app-run-hint command="npm run test:browser actionability" />
   `,
   styles: `
     code {

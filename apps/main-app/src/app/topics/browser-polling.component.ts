@@ -9,9 +9,9 @@ import { RunHintComponent } from '../shared/run-hint.component';
     <h2 class="topic-header">Polling & Retries</h2>
     <p class="topic-subtitle">
       Async operations — effects, debounce, HTTP calls — mean the DOM isn't ready
-      the instant your test acts. Vitest provides <code>expect.poll</code>,
-      <code>vi.waitFor</code>, and <code>expect.element</code> to retry assertions
-      until they pass or time out.
+      the instant your test acts. Vitest provides <code>expect.poll</code>
+      and <code>expect.element</code> to retry assertions until they pass or
+      time out.
     </p>
 
     <div class="topic-section">
@@ -35,12 +35,13 @@ import { RunHintComponent } from '../shared/run-hint.component';
     </div>
 
     <div class="topic-section">
-      <h3>vi.waitFor</h3>
+      <h3>expect.poll — multiple assertions</h3>
       <p>
-        Retries an entire block of assertions — useful when multiple things
-        need to settle together.
+        When several values need to settle together, chain multiple
+        <code>expect.poll</code> calls — each one retries independently until
+        its matcher passes.
       </p>
-      <app-code-block [code]="waitFor" />
+      <app-code-block [code]="pollMultiple" />
     </div>
 
     <div class="topic-section">
@@ -79,7 +80,7 @@ import { RunHintComponent } from '../shared/run-hint.component';
       not <em>when</em> or <em>how</em> Angular gets there.
     </div>
 
-    <app-run-hint command="npm run test:browser -- --testFiles=polling" />
+    <app-run-hint command="npm run test:browser polling" />
   `,
   styles: `
     code {
@@ -103,52 +104,95 @@ export class BrowserPollingComponent {
 
   protected expectPoll = `import { page, userEvent } from 'vitest/browser';
 
-it('should filter results after debounce', async () => {
-  await userEvent.fill(page.getByPlaceholder('Search...'), 'Angular');
+it('should retry until value matches', async () => {
+  document.body.innerHTML = \`
+    <button id="start">Start</button>
+    <span id="status">idle</span>
+  \`;
 
-  // Keeps calling the function until length === 3 or timeout
-  await expect.poll(() => {
-    return document.querySelectorAll('.result').length;
-  }).toBe(3);
+  const statusEl =
+    document.getElementById('status') as HTMLSpanElement;
+  const startBtn =
+    document.getElementById('start') as HTMLButtonElement;
+  startBtn.addEventListener('click', () => {
+    setTimeout(() => {
+      statusEl.textContent = 'done';
+    }, 200);
+  });
+
+  await userEvent.click(
+    page.getByRole('button', { name: 'Start' })
+  );
+
+  await expect.poll(() => statusEl.textContent).toBe('done');
 });
 
-// Also works with async functions
-it('should update cart count', async () => {
-  await userEvent.click(page.getByRole('button', { name: 'Add to cart' }));
+it('should retry with async function', async () => {
+  document.body.innerHTML = \`<ul id="list"></ul>\`;
 
-  await expect.poll(async () => {
-    const badge = document.querySelector('.cart-badge');
-    return badge?.textContent?.trim();
-  }).toBe('1');
+  const list =
+    document.getElementById('list') as HTMLUListElement;
+  setTimeout(() => {
+    list.innerHTML =
+      '<li>Item 1</li><li>Item 2</li><li>Item 3</li>';
+  }, 150);
+
+  await expect.poll(() => {
+    return list.querySelectorAll('li').length;
+  }).toBe(3);
 });`;
 
-  protected waitFor = `import { waitFor } from 'vitest/browser';
+  protected pollMultiple = `it('should retry until all conditions are met', async () => {
+  document.body.innerHTML = \`<div id="container"></div>\`;
 
-it('should show filtered results with correct titles', async () => {
-  await userEvent.fill(page.getByPlaceholder('Search...'), 'Angular');
+  const container =
+    document.getElementById('container') as HTMLDivElement;
 
-  // Retries the entire block until all assertions pass
-  await waitFor(() => {
-    const headings = document.querySelectorAll('h3.title');
-    expect(headings.length).toBe(3);
-    expect(headings[0].textContent).toContain('Angular');
-    expect(headings[1].textContent).toContain('Angular');
-    expect(headings[2].textContent).toContain('Angular');
-  });
+  setTimeout(() => {
+    container.innerHTML = \`
+      <h3>Angular Testing</h3>
+      <p>A guide to testing Angular apps</p>
+      <span class="badge">new</span>
+    \`;
+  }, 200);
+
+  await expect.poll(
+    () => container.querySelector('h3')?.textContent
+  ).toBe('Angular Testing');
+
+  await expect.poll(
+    () => container.querySelector('.badge')?.textContent
+  ).toBe('new');
 });`;
 
   protected expectElement = `import { page, userEvent } from 'vitest/browser';
 
-it('should filter and display results', async () => {
-  await userEvent.fill(page.getByPlaceholder('Search...'), 'Angular');
+it('should auto-retry assertions on locators', async () => {
+  document.body.innerHTML = \`
+    <button id="toggle">Show</button>
+    <div id="content" style="display:none">
+      <h3>Revealed Content</h3>
+    </div>
+  \`;
 
-  const headings = page.getByRole('heading', { level: 3 });
+  const toggleBtn =
+    document.getElementById('toggle') as HTMLButtonElement;
+  const content =
+    document.getElementById('content') as HTMLDivElement;
+  toggleBtn.addEventListener('click', () => {
+    setTimeout(() => {
+      content.style.display = 'block';
+    }, 200);
+  });
 
+  await userEvent.click(
+    page.getByRole('button', { name: 'Show' })
+  );
+
+  const heading = page.getByRole('heading',
+    { name: 'Revealed Content' });
   // expect.element auto-retries — no explicit polling needed
-  await expect.element(headings).toHaveCount(3);
-  await expect.element(headings.nth(0)).toHaveTextContent('Angular Testing');
-  await expect.element(headings.nth(1)).toHaveTextContent('Angular Signals');
-  await expect.element(headings.nth(2)).toHaveTextContent('Angular Forms');
+  await expect.element(heading).toBeVisible();
 });`;
 
   protected manualWait = `// Fragile: hardcoded delay
@@ -165,25 +209,29 @@ expect(items.length).toBe(3);
   protected vitestPolling = `// Robust: polls until true or timeout
 await expect.poll(() => items.length).toBe(3);
 
-// Robust: retries entire assertion block
-await waitFor(() => {
-  expect(items.length).toBe(3);
-  expect(items[0].textContent).toBe('...');
-});
+// Multiple conditions — each retries independently
+await expect.poll(
+  () => items.length
+).toBe(3);
+await expect.poll(
+  () => items[0].textContent
+).toBe('...');
 
 // Works regardless of internal timing.
 // Adapts to slow CI machines automatically.`;
 
-  protected timeoutConfig = `// Per-assertion timeout
-await expect.poll(() => count, {
-  timeout: 5000,   // max wait (default: 1000ms)
-  interval: 100,   // poll interval (default: 50ms)
-}).toBe(10);
+  protected timeoutConfig = `// Per-assertion timeout and interval
+it('should support custom timeout and interval', async () => {
+  let counter = 0;
+  const interval = setInterval(() => counter++, 50);
 
-// Per-block timeout
-await waitFor(() => {
-  expect(el.textContent).toBe('Done');
-}, { timeout: 5000, interval: 100 });
+  await expect.poll(() => counter, {
+    timeout: 2000,   // max wait (default: 1000ms)
+    interval: 100,   // poll interval (default: 50ms)
+  }).toBeGreaterThanOrEqual(5);
+
+  clearInterval(interval);
+});
 
 // Global default in vitest config
 // test: {
