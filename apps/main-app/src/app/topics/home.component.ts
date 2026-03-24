@@ -63,6 +63,9 @@ import { CodeBlockComponent } from '../shared/code-block.component';
         [code]="runCommand"
         title="Unit tests (jsdom)" />
       <app-code-block
+        [code]="coverageCommand"
+        title="Code coverage" />
+      <app-code-block
         [code]="browserCommand"
         title="Browser mode tests (real Chromium)" />
     </div>
@@ -122,6 +125,12 @@ npx nx test main-app --watch
 
 # Run with Vitest UI dashboard
 npx nx test main-app --watch --ui`;
+
+  protected coverageCommand = `# Run with code coverage report
+npx nx test main-app --coverage
+
+# Run with coverage + Vitest UI (coverage tab appears in the dashboard)
+npx nx test main-app --watch --ui --coverage`;
 
   protected browserCommand = `# Run browser tests (opens real Chromium window!)
 npx nx run main-app:test:browser --watch

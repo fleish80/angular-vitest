@@ -58,7 +58,7 @@ describe('GreetingService', () => {
 
   it('should handle HTTP error', () => {
     service.getGreeting(999).subscribe({
-      next: () => fail('expected an error'),
+      next: () => expect.unreachable('expected an error'),
       error: (err) => {
         expect(err.status).toBe(404);
       },
