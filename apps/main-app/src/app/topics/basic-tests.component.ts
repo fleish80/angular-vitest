@@ -50,7 +50,15 @@ import { RunHintComponent } from '../shared/run-hint.component';
   `,
 })
 export class BasicTestsComponent {
-  protected describeIt = `describe('Calculator', () => {
+  protected describeIt = `function add(a: number, b: number): number {
+  return a + b;
+}
+
+function multiply(a: number, b: number): number {
+  return a * b;
+}
+
+describe('Calculator', () => {
 
   describe('add', () => {
     it('should add two positive numbers', () => {

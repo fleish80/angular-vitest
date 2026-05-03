@@ -122,6 +122,7 @@ export class BrowserFullModeComponent {
 //   └─ Report ──────────────── Vitest Server`;
 
   protected partialExample = `// Partial mode: interactions via Testing Library
+import { screen } from '@testing-library/angular';
 import { userEvent } from '@testing-library/user-event';
 
 it('adds to cart', async () => {

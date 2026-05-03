@@ -92,20 +92,41 @@ import { CodeBlockComponent } from '../shared/code-block.component';
   `,
 })
 export class KarmaVsVitestComponent {
-  protected karmaArch = `1. Webpack bundles ALL test files
-2. Launches a real browser (Chrome)
-3. Serves bundle to browser via HTTP
-4. Browser executes tests
-5. Reports results back via WebSocket
+  protected karmaArch = `1. Webpack bundles ALL test files into one big JS file
+   (every spec + every import, even ones a single test
+   touches — resolved and concatenated up front)
 
-→ Slow startup, full re-bundle on changes`;
+2. Launches a real browser (headless Chrome) and serves
+   the bundle over HTTP
 
-  protected vitestArch = `1. Vite transforms files on-demand (ESM)
-2. Runs in Node.js with jsdom
-3. No bundling, no browser launch
-4. Workers run tests in parallel
+3. Browser downloads the bundle, executes the tests, and
+   reports results back to the Karma server via WebSocket
 
-→ Instant startup, only re-runs affected tests`;
+4. On file change → re-bundle everything → reload browser
+
+→ Slow cold start (seconds to minutes on large repos),
+  full re-bundle on every change, one browser process
+  runs all tests serially.`;
+
+  protected vitestArch = `1. Vite serves source files on-demand as native ES modules
+   (ESM = ECMAScript Modules — the standard 'import'/'export'
+   syntax built into Node.js and modern browsers). No upfront
+   bundling: when a test imports a file, Vite transforms just
+   that file (TS → JS, Angular templates → render code) and
+   hands it back. Files you don't import are never touched.
+
+2. Tests run in Node.js, with jsdom faking just enough of the
+   browser DOM (document, window, elements) for component tests
+   — no real Chrome process, no HTTP server, no WebSocket bridge.
+
+3. Vitest spawns worker threads and runs test files in parallel,
+   each in its own isolated module graph.
+
+4. On file change → Vite invalidates only the changed module +
+   its importers → re-runs only the affected tests.
+
+→ Cold start in ~1s, sub-second re-runs on save, parallel
+  execution across CPU cores by default.`;
 
   protected karmaConfig = `// karma.conf.js — 40+ lines of boilerplate
 module.exports = function (config) {

@@ -55,7 +55,95 @@ import { RunHintComponent } from '../shared/run-hint.component';
     </div>
 
     <div class="topic-section">
-      <h3>Comparison</h3>
+      <h3>expect.poll vs expect.element</h3>
+      <p>
+        Both retry an assertion until it passes — but they target different
+        things and live in different worlds.
+      </p>
+
+      <div class="comparison-grid">
+        <div>
+          <h4><code>expect.poll(fn)</code> — polls a function</h4>
+          <ul class="diff-list">
+            <li>You hand it a <strong>function</strong>. Vitest re-invokes it on
+              every tick until the matcher passes or it times out.</li>
+            <li>Works <strong>everywhere</strong> — Node, jsdom, happy-dom, or
+              browser mode.</li>
+            <li>Re-runs the <strong>whole expression</strong> each tick: DOM
+              query, property read, computation.</li>
+            <li>Limited matcher surface: only <strong>synchronous, non-negated</strong>
+              matchers (<code>toBe</code>, <code>toEqual</code>,
+              <code>toContain</code>, …). No <code>.not</code>,
+              <code>.resolves</code>, <code>.rejects</code>, or snapshot matchers.</li>
+            <li>You own the query — if the element doesn't exist yet,
+              <code>?.textContent</code> returns <code>undefined</code> and
+              polling continues.</li>
+          </ul>
+        </div>
+        <div>
+          <h4><code>expect.element(locator)</code> — retries a locator</h4>
+          <ul class="diff-list">
+            <li>You hand it a <strong>locator</strong>
+              (<code>page.getByRole(...)</code>, <code>page.getByText(...)</code>, …).</li>
+            <li><strong>Browser mode only</strong> — needs a real browser
+              (Playwright / WebDriverIO).</li>
+            <li>Retry is <strong>baked into every locator-aware matcher</strong>:
+              <code>toBeVisible</code>, <code>toHaveTextContent</code>,
+              <code>toHaveAttribute</code>, <code>toBeChecked</code>, …
+              No <code>.poll</code> wrapper needed.</li>
+            <li><strong>Full matcher surface</strong>, including
+              <code>.not</code> — e.g.
+              <code>expect.element(x).not.toBeVisible()</code>.</li>
+            <li>Locators are <strong>lazy and auto-retry</strong> internally.
+              You describe the element semantically; the framework waits until
+              it exists, becomes visible, and is stable.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h4>Side-by-side</h4>
+      <app-code-block [code]="pollVsElement" />
+
+      <h4>When to use which</h4>
+      <table class="when-table">
+        <thead>
+          <tr><th>Situation</th><th>Use</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Node / jsdom / component test, polling a computed value or DOM property</td>
+            <td><code>expect.poll</code></td>
+          </tr>
+          <tr>
+            <td>Browser mode, asserting on something a user would see or interact with</td>
+            <td><code>expect.element</code></td>
+          </tr>
+          <tr>
+            <td>Need <code>.not.toBeVisible()</code>, <code>.toHaveAttribute()</code>, <code>.toBeChecked()</code></td>
+            <td><code>expect.element</code> (locator-aware matchers)</td>
+          </tr>
+          <tr>
+            <td>Polling a non-DOM value (signal, store, network state)</td>
+            <td><code>expect.poll</code></td>
+          </tr>
+          <tr>
+            <td>You already have a <code>Locator</code> from <code>page.getByRole(...)</code></td>
+            <td><code>expect.element</code> — don't wrap it in <code>expect.poll</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="one-liner">
+        <strong>One-liner:</strong>
+        <code>expect.poll</code> retries <em>your function</em>;
+        <code>expect.element</code> retries <em>a matcher against a locator</em>
+        — and only the latter understands user-facing concepts like visibility,
+        role, and accessible name.
+      </p>
+    </div>
+
+    <div class="topic-section">
+      <h3>Manual waits vs Vitest polling</h3>
       <div class="comparison-grid">
         <div>
           <h4>Manual (fragile)</h4>
@@ -89,6 +177,48 @@ import { RunHintComponent } from '../shared/run-hint.component';
       background-color: var(--mat-sys-surface-container);
       font-family: 'Roboto Mono', monospace;
       font-size: 0.85em;
+    }
+
+    .diff-list {
+      margin: 8px 0 0;
+      padding-left: 20px;
+      line-height: 1.55;
+    }
+
+    .diff-list li {
+      margin-bottom: 6px;
+    }
+
+    .when-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 0.92em;
+    }
+
+    .when-table th,
+    .when-table td {
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--mat-sys-outline-variant);
+      vertical-align: top;
+    }
+
+    .when-table th {
+      font-weight: 600;
+      background-color: var(--mat-sys-surface-container);
+    }
+
+    .when-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .one-liner {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-left: 3px solid var(--mat-sys-primary);
+      background-color: var(--mat-sys-surface-container);
+      border-radius: 4px;
     }
   `,
 })
@@ -194,6 +324,22 @@ it('should auto-retry assertions on locators', async () => {
   // expect.element auto-retries — no explicit polling needed
   await expect.element(heading).toBeVisible();
 });`;
+
+  protected pollVsElement = `// expect.poll — runs your function each tick
+//   You query the DOM yourself; works in Node/jsdom/browser.
+await expect.poll(
+  () => document.querySelector('h3')?.textContent,
+).toBe('Angular Testing');
+
+// expect.element — retries a matcher against a locator
+//   Browser mode only; locator is semantic, retry is built in.
+await expect.element(
+  page.getByRole('heading', { level: 3 }),
+).toHaveText('Angular Testing');
+
+// Negation only works with expect.element:
+await expect.element(page.getByRole('alert')).not.toBeVisible();
+// expect.poll(...).not.toBe(...)  →  ❌ unsupported`;
 
   protected manualWait = `// Fragile: hardcoded delay
 await new Promise(r => setTimeout(r, 500));

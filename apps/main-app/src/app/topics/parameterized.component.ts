@@ -57,17 +57,25 @@ import { RunHintComponent } from '../shared/run-hint.component';
   `,
 })
 export class ParameterizedComponent {
-  protected arrayEach = `it.each([
+  protected arrayEach = `function add(a: number, b: number): number {
+  return a + b;
+}
+
+it.each([
   [1, 1, 2],
   [1, 2, 3],
   [2, 2, 4],
   [5, 5, 10],
   [0, 0, 0],
 ])('add(%i, %i) should return %i', (a, b, expected) => {
-  expect(a + b).toBe(expected);
+  expect(add(a, b)).toBe(expected);
 });`;
 
-  protected objectEach = `it.each([
+  protected objectEach = `function isBlank(value: string | null | undefined): boolean {
+  return value == null || value.trim().length === 0;
+}
+
+it.each([
   { input: '',        expected: true,  desc: 'empty string' },
   { input: '  ',      expected: true,  desc: 'whitespace' },
   { input: 'hello',   expected: false, desc: 'non-empty string' },
@@ -77,7 +85,15 @@ export class ParameterizedComponent {
   expect(isBlank(input)).toBe(expected);
 });`;
 
-  protected templateEach = `// Table format with tagged template literal
+  protected templateEach = `function formatStatus(status: 'ok' | 'warn' | 'err'): string {
+  switch (status) {
+    case 'ok':   return '✅ success';
+    case 'warn': return '⚠️ warning';
+    case 'err':  return '❌ error';
+  }
+}
+
+// Table format with tagged template literal
 it.each\`
   status   | emoji    | label
   \${'ok'}   | \${'✅'}  | \${'success'}
@@ -89,7 +105,15 @@ it.each\`
   expect(result).toContain(label);
 });`;
 
-  protected describeEach = `describe.each([
+  protected describeEach = `function getPermissions(role: string): { canEdit: boolean; canDelete: boolean } {
+  switch (role) {
+    case 'admin':  return { canEdit: true,  canDelete: true };
+    case 'editor': return { canEdit: true,  canDelete: false };
+    default:       return { canEdit: false, canDelete: false };
+  }
+}
+
+describe.each([
   { role: 'admin',  canEdit: true,  canDelete: true },
   { role: 'editor', canEdit: true,  canDelete: false },
   { role: 'viewer', canEdit: false, canDelete: false },
